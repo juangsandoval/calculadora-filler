@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculadora de términos</title>
+</head>
+<body>
+
+  <h2>Calculadora de términos procesales</h2>
+
+  <label>Fecha inicio:</label>
+  <input type="date" id="fechaInicio"><br><br>
+
+  <label>Fecha límite:</label>
+  <input type="date" id="fechaLimite"><br><br>
+
+  <label>Fecha presentación:</label>
+  <input type="date" id="fechaPresentacion"><br><br>
+
+  <button onclick="generarDocumento()">Generar Word</button>
+
+  <!-- Librerías -->
+  <script src="libs/pizzip.min.js"></script>
+  <script src="libs/docxtemplater.min.js"></script>
+  <script src="libs/FileSaver.min.js"></script>
+
+  <!-- Tu lógica -->
+  <script src="js/app.js"></script>
+</body>
+</html>
