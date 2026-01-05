@@ -59,20 +59,98 @@ function generarDOCX(zip, data) {
         mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     });
 }
-
+/* ================= FUNCIÓN DE REEMPLAZAR ================= */
 function reemplazar(xml, data) {
-    let resultado = xml;
+    const tRegex = /(<w:t[^>]*>)([\s\S]*?)(<\/w:t>)/g;
 
-    for (const clave in data) {
-        const valor = escapeXml(data[clave] ?? "");
-        console.log(`Reemplazando {{${clave}}} →`, valor);
+    // 1. Extraer todos los runs <w:t>
+    const runs = [];
+    let match;
+    while ((match = tRegex.exec(xml)) !== null) {
+        runs.push({
+            start: match.index,
+            full: match[0],
+            open: match[1],
+            text: match[2],
+            close: match[3]
+        });
+    }
+    if (runs.length === 0) return xml;
 
-        const regex = new RegExp(`{{\\s*${clave}\\s*}}`, "g");
-        resultado = resultado.replace(regex, valor);
+    // 2. Unir todos los textos
+    const texts = runs.map(r => r.text);
+    const combined = texts.join("");
+
+    // 3. Buscar placeholders {{ }}
+    const regex = /{{\s*([\w_]+)\s*}}/g;
+    let m;
+
+    // Para no romper índices, reemplazamos de atrás hacia adelante
+    const replacements = [];
+    while ((m = regex.exec(combined))) {
+        replacements.push({
+            key: m[1],
+            start: m.index,
+            end: m.index + m[0].length
+        });
     }
 
-    return resultado;
+    if (replacements.length === 0) return xml;
+
+    // 4. Aplicar reemplazos sobre el array de textos
+    for (let i = replacements.length - 1; i >= 0; i--) {
+        const { key, start, end } = replacements[i];
+        const value = escapeXml(data[key] ?? "");
+
+        let acc = 0;
+        let startRun = -1;
+        let endRun = -1;
+        let startOffset = 0;
+        let endOffset = 0;
+
+        // Encontrar runs involucrados
+        for (let r = 0; r < texts.length; r++) {
+            const len = texts[r].length;
+            if (startRun === -1 && start >= acc && start < acc + len) {
+                startRun = r;
+                startOffset = start - acc;
+            }
+            if (endRun === -1 && end > acc && end <= acc + len) {
+                endRun = r;
+                endOffset = end - acc;
+            }
+            acc += len;
+        }
+
+        if (startRun === -1 || endRun === -1) continue;
+
+        // Reemplazar
+        texts[startRun] =
+            texts[startRun].slice(0, startOffset) +
+            value +
+            texts[endRun].slice(endOffset);
+
+        // Vaciar runs intermedios
+        for (let r = startRun + 1; r <= endRun; r++) {
+            texts[r] = "";
+        }
+    }
+
+    // 5. Reconstruir XML
+    let output = "";
+    let cursor = 0;
+
+    for (let i = 0; i < runs.length; i++) {
+        const r = runs[i];
+        output += xml.slice(cursor, r.start);
+        output += r.open + texts[i] + r.close;
+        cursor = r.start + r.full.length;
+    }
+
+    output += xml.slice(cursor);
+    return output;
 }
+
 
 
 
@@ -107,6 +185,7 @@ function escapeXml(s) {
 function log(m) { logEl.textContent += m + "\n"; }
 
 })();
+
 
 
 
