@@ -31,7 +31,7 @@ window.calcularYGestionar = async function () {
         fecha_presentacion: formatDate(fPres),
         clasificacion: clasificacion.toUpperCase()
     };
-
+    console.log("Contexto enviado al DOCX:", contexto);
     const blob = generarDOCX(zip, contexto);
     saveAs(blob, `resultado_${clasificacion}.docx`);
 };
@@ -65,12 +65,15 @@ function reemplazar(xml, data) {
 
     for (const clave in data) {
         const valor = escapeXml(data[clave] ?? "");
+        console.log(`Reemplazando {{${clave}}} →`, valor);
+
         const regex = new RegExp(`{{\\s*${clave}\\s*}}`, "g");
         resultado = resultado.replace(regex, valor);
     }
 
     return resultado;
 }
+
 
 
 function aplicar(arr, start, len, val) {
@@ -104,5 +107,6 @@ function escapeXml(s) {
 function log(m) { logEl.textContent += m + "\n"; }
 
 })();
+
 
 
