@@ -60,30 +60,16 @@ function generarDOCX(zip, data) {
     });
 }
 
-function reemplazar(xml, data) {
-    const t = /(<w:t[^>]*>)([\s\S]*?)(<\/w:t>)/g;
-    const runs = [];
-    let m;
-    while ((m = t.exec(xml))) runs.push({ p:m[1], t:m[2], s:m[3] });
+function reemplazar(xml, datos) {
+  let resultado = xml;
 
-    const textos = runs.map(r => r.t);
-    const unido = textos.join("");
+  Object.keys(datos).forEach(clave => {
+    const valor = datos[clave];
+    const regex = new RegExp(`{{\\s*${clave}\\s*}}`, "g");
+    resultado = resultado.replace(regex, valor);
+  });
 
-    const r = /{{\s*([\w_]+)\s*}}/g;
-    let mm;
-    while ((mm = r.exec(unido))) {
-        const val = escapeXml(data[mm[1]] ?? "");
-        aplicar(textos, mm.index, mm[0].length, val);
-    }
-
-    let out = "";
-    let i = 0;
-    t.lastIndex = 0;
-    while ((m = t.exec(xml))) {
-        out += xml.slice(i, m.index) + runs.shift().p + textos.shift() + runs.shift().s;
-        i = m.index + m[0].length;
-    }
-    return out + xml.slice(i);
+  return resultado;
 }
 
 function aplicar(arr, start, len, val) {
@@ -117,3 +103,4 @@ function escapeXml(s) {
 function log(m) { logEl.textContent += m + "\n"; }
 
 })();
+
